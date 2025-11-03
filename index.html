@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Granny Bat</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<link href="https://fonts.googleapis.com/css2?family=Creepster&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+    * { -webkit-tap-highlight-color: transparent; }
+    body {
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: url('granny_house_background.jpg') center/cover no-repeat;
+        font-family: 'Creepster', cursive;
+        color: #fff;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        transition: background 0.5s ease;
+        overflow-x: hidden;
+        padding: 10px;
+        box-sizing: border-box;
+    }
+    .dark-theme { background: rgba(0,0,0,0.92); }
+    .light-theme { background: rgba(255,255,255,0.92); color: #000; text-shadow: 1px 1px 2px rgba(0,0,0,0.2); }
+    .stealth-mode { background: rgba(0,35,0,0.9) !important; }
+    
+    /* Background Touch Area */
+    .background-touch-area {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: -1;
+    }
+    
+    .container {
+        max-width: 420px;
+        width: 100%;
+        padding: 20px 16px;
+        background: rgba(0,0,0,0.85);
+        border-radius: 20px;
+        box-shadow: 0 8px 32px rgba(150,0,0,0.6), 0 0 60px rgba(255,0,0,0.3);
+        text-align: center;
+        position: relative;
+        backdrop-filter: blur(10px);
+        z-index: 1;
+    }
+    .light-theme .container {
+        background: rgba(255,255,255,0.85);
+        box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    }
+    
+    /* Header with Title & Toggle */
+    .header {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+    }
+    h1 {
+        font-size: clamp(24px, 7vw, 32px);
+        margin: 0;
+        color: #ff1111;
+        letter-spacing: 2px;
+        text-shadow: 0 0 20px rgba(255,17,17,0.8);
+    }
+    
+    /* Enhanced Toggle Switch */
+    .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 56px;
+        height: 28px;
+    }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(145deg, #444, #555);
+        transition: 0.3s ease;
+        border-radius: 28px;
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+    }
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 22px;
+        width: 22px;
+        left: 3px;
+        bottom: 3px;
+        background: linear-gradient(145deg, #e0e0e0, #fff);
+        transition: 0.3s ease;
+        border-radius: 50%;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    input:checked + .slider {
+        background: linear-gradient(145deg, #a00000, #8b0000);
+        box-shadow: 0 0 15px rgba(255,0,0,0.5), inset 0 2px 4px rgba(0,0,0,0.3);
+    }
+    input:checked + .slider:before {
+        transform: translateX(28px);
+        background: linear-gradient(145deg, #ff3333, #ff6666);
+    }
+    
+    /* Instruction Text */
+    .instruction {
+        font-family: 'Inter', sans-serif;
+        font-size: 12px;
+        opacity: 0.8;
+        margin-bottom: 14px;
+        font-weight: 400;
+    }
+    
+    /* Button Grid Layout for Mobile */
+    .button-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin: 10px 0;
+    }
+    
+    /* Enhanced Buttons */
+    button {
+        padding: 16px 12px;
+        font-size: 15px;
+        font-weight: 600;
+        font-family: 'Inter', sans-serif;
+        border: none;
+        border-radius: 14px;
+        background: linear-gradient(145deg, #a00000, #8b0000);
+        color: #fff;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 12px rgba(139,0,0,0.4), inset 0 -2px 4px rgba(0,0,0,0.2);
+        position: relative;
+        overflow: hidden;
+        touch-action: manipulation;
+    }
+    button:before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.2);
+        transform: translate(-50%, -50%);
+        transition: width 0.6s, height 0.6s;
+    }
+    button:active:before {
+        width: 300px;
+        height: 300px;
+    }
+    button:active:not(:disabled) {
+        transform: scale(0.95);
+    }
+    button:disabled {
+        background: linear-gradient(145deg, #444, #333);
+        color: #666;
+        cursor: not-allowed;
+        box-shadow: none;
+    }
+    .light-theme button {
+        background: linear-gradient(145deg, #e0e0e0, #d0d0d0);
+        color: #333;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    /* Stealth Button Active State */
+    #stealthBtn.active {
+        background: linear-gradient(145deg, #00cc00, #00aa00) !important;
+        box-shadow: 0 0 20px rgba(0,255,0,0.5), 0 4px 12px rgba(0,170,0,0.4) !important;
+    }
+    
+    /* Enhanced Timer Rows */
+    .timer-row {
+        font-family: 'Inter', sans-serif;
+        font-size: 17px;
+        font-weight: 600;
+        margin: 10px 0;
+        padding: 12px;
+        background: rgba(0,0,0,0.6);
+        border-radius: 10px;
+        display: none;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        border: 2px solid rgba(255,255,255,0.1);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    .timer-row.active {
+        display: block;
+        opacity: 1;
+    }
+    .light-theme .timer-row {
+        background: rgba(255,255,255,0.7);
+        border-color: rgba(0,0,0,0.1);
+    }
+    
+    /* Blinking Animation */
+    .blink-red {
+        animation: blinkRed 0.5s infinite;
+    }
+    @keyframes blinkRed {
+        0%, 100% { color: #fff; }
+        50% { color: #ff0000; text-shadow: 0 0 10px #ff0000; }
+    }
+    
+    /* Alert Messages */
+    #floorAlert, #stealthEndAlert, #stunnedAlert {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: clamp(22px, 7vw, 32px);
+        font-weight: bold;
+        z-index: 300;
+        animation: pulse 1.5s infinite;
+        padding: 20px 30px;
+        border-radius: 15px;
+        backdrop-filter: blur(10px);
+        max-width: 90%;
+        text-align: center;
+    }
+    #floorAlert {
+        color: #ff8800;
+        text-shadow: 0 0 20px #ff8800, 0 0 40px #ff8800;
+        background: rgba(255,136,0,0.2);
+        border: 2px solid #ff8800;
+    }
+    #stealthEndAlert {
+        color: #00ff00;
+        text-shadow: 0 0 20px #00ff00, 0 0 40px #00ff00;
+        background: rgba(0,255,0,0.2);
+        border: 2px solid #00ff00;
+    }
+    #stunnedAlert {
+        color: #ff00ff;
+        text-shadow: 0 0 20px #ff00ff, 0 0 40px #ff00ff;
+        background: rgba(255,0,255,0.2);
+        border: 2px solid #ff00ff;
+    }
+    @keyframes pulse {
+        0%, 100% { opacity: 0.7; transform: translate(-50%, -50%) scale(1); }
+        50% { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
+    }
+    
+    /* Settings Button - Fixed to Screen Corner */
+    #settingsBtn {
+        position: fixed;
+        top: 16px;
+        right: 16px;
+        font-size: 28px;
+        background: rgba(0,0,0,0.7);
+        border: 2px solid rgba(255,255,255,0.3);
+        color: #ccc;
+        cursor: pointer;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+        backdrop-filter: blur(10px);
+        z-index: 200;
+    }
+    #settingsBtn:active {
+        transform: rotate(90deg) scale(0.95);
+    }
+    
+    /* Full Screen Settings Overlay */
+    #settings {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.97);
+        z-index: 500;
+        overflow-y: auto;
+        animation: fadeIn 0.3s ease;
+        padding: 80px 20px 40px;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    .light-theme #settings {
+        background: rgba(255,255,255,0.97);
+    }
+    
+    #settings .settings-content {
+        max-width: 500px;
+        margin: 0 auto;
+    }
+    
+    #settings h2 {
+        margin: 0 0 30px 0;
+        font-size: 28px;
+        color: #ff4444;
+        text-align: center;
+        font-family: 'Creepster', cursive;
+    }
+    
+    #settings .close-btn {
+        position: fixed;
+        top: 16px;
+        right: 16px;
+        font-size: 32px;
+        background: rgba(255,0,0,0.8);
+        border: none;
+        color: #fff;
+        cursor: pointer;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 16px rgba(255,0,0,0.5);
+        z-index: 501;
+    }
+    
+    #settings label {
+        display: block;
+        margin: 20px 0;
+        font-size: 14px;
+        font-family: 'Inter', sans-serif;
+        font-weight: 600;
+        color: #ddd;
+    }
+    .light-theme #settings label {
+        color: #333;
+    }
+    
+    #settings input[type=range] {
+        width: 100%;
+        margin-top: 10px;
+        height: 6px;
+        border-radius: 3px;
+        background: rgba(255,255,255,0.2);
+        outline: none;
+        -webkit-appearance: none;
+    }
+    #settings input[type=range]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: linear-gradient(145deg, #ff3333, #cc0000);
+        cursor: pointer;
+        box-shadow: 0 2px 8px rgba(255,0,0,0.5);
+    }
+    #settings input[type=range]::-moz-range-thumb {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: linear-gradient(145deg, #ff3333, #cc0000);
+        cursor: pointer;
+        border: none;
+        box-shadow: 0 2px 8px rgba(255,0,0,0.5);
+    }
+    
+    #settings select {
+        width: 100%;
+        padding: 12px;
+        margin-top: 10px;
+        border-radius: 8px;
+        border: 1px solid rgba(255,255,255,0.2);
+        background: rgba(0,0,0,0.5);
+        color: #fff;
+        font-family: 'Inter', sans-serif;
+        font-size: 14px;
+        cursor: pointer;
+    }
+    .light-theme #settings select {
+        background: rgba(255,255,255,0.9);
+        color: #333;
+        border-color: rgba(0,0,0,0.2);
+    }
+    
+    /* Setting Value Display */
+    .setting-value {
+        display: inline-block;
+        min-width: 60px;
+        text-align: right;
+        color: #ff6666;
+        font-weight: 700;
+        float: right;
+    }
+    
+    /* Effects */
+    .flash-red {
+        animation: flashRed 0.5s 2;
+    }
+    @keyframes flashRed {
+        0%, 100% { background: rgba(255,0,0,0.3); }
+        50% { background: rgba(255,0,0,0.7); }
+    }
+    .flash-floor {
+        animation: flashFloor 0.4s 3;
+    }
+    @keyframes flashFloor {
+        0%, 100% { box-shadow: 0 8px 32px rgba(150,0,0,0.6); }
+        50% { box-shadow: 0 0 40px #ff8800, 0 8px 32px rgba(255,136,0,0.8); }
+    }
+    .shake {
+        animation: shake 0.4s;
+    }
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-8px); }
+        75% { transform: translateX(8px); }
+    }
+    
+    /* Mobile Optimizations */
+    @media (max-width: 480px) {
+        body {
+            padding: 5px;
+        }
+        .container {
+            padding: 18px 14px;
+        }
+        button {
+            padding: 14px 10px;
+            font-size: 14px;
+        }
+        #settingsBtn {
+            top: 12px;
+            right: 12px;
+            width: 46px;
+            height: 46px;
+        }
+    }
+</style>
+</head>
+<body class="dark-theme">
+
+<!-- Background Touch Area for Music -->
+<div class="background-touch-area" id="bgTouchArea"></div>
+
+<div class="container">
+    <!-- Header with Title & Chase Toggle -->
+    <div class="header">
+        <h1>Granny Bat</h1>
+        <label class="toggle-switch">
+            <input type="checkbox" id="chaseToggle">
+            <span class="slider"></span>
+        </label>
+    </div>
+    <p class="instruction">Tap to unlock → use buttons</p>
+    
+    <!-- Action Buttons Grid -->
+    <div class="button-grid">
+        <button id="hitBtn">Hit Player</button>
+        <button id="stunBtn">Stun Granny</button>
+        <button id="stealthBtn">Stealth (30s)</button>
+        <button id="floorBtn">Change Floor</button>
+    </div>
+    
+    <!-- Timers -->
+    <div class="timer-row" id="stunTimer"></div>
+    <div class="timer-row" id="floorTimer"></div>
+</div>
+
+<!-- Alerts -->
+<div id="floorAlert">⚠️ CHANGE FLOOR! ⚠️</div>
+<div id="stealthEndAlert">⚡ STEALTH ENDING! ⚡</div>
+<div id="stunnedAlert">💀 YOU ARE STUNNED! 💀</div>
+
+<!-- Settings Button - Fixed to Screen -->
+<button id="settingsBtn">⚙️</button>
+
+<!-- Full Screen Settings Panel -->
+<div id="settings">
+    <button class="close-btn" id="closeSettings">✕</button>
+    <div class="settings-content">
+        <h2>⚙️ Settings</h2>
+        
+        <label>
+            Quote Interval: <span class="setting-value" id="randVal">7-10s</span>
+            <input type="range" id="randSpeed" min="5" max="15" value="7">
+        </label>
+        
+        <label>
+            Stealth Duration: <span class="setting-value" id="stealthTimeVal">30s</span>
+            <input type="range" id="stealthTime" min="10" max="60" value="30">
+        </label>
+        
+        <label>
+            Stealth Cooldown: <span class="setting-value" id="stealthCDVal">120s</span>
+            <input type="range" id="stealthCD" min="30" max="300" value="120">
+        </label>
+        
+        <label>
+            Stun Duration: <span class="setting-value" id="stunTimeVal">10s</span>
+            <input type="range" id="stunTime" min="5" max="30" value="10">
+        </label>
+        
+        <label>
+            Floor Timer: <span class="setting-value" id="floorTimeVal">120s</span>
+            <input type="range" id="floorTime" min="60" max="300" value="120">
+        </label>
+        
+        <label>
+            Floor Warning: <span class="setting-value" id="floorWarnVal">10s</span>
+            <input type="range" id="floorWarn" min="5" max="30" value="10">
+        </label>
+        
+        <label>
+            Voice Volume: <span class="setting-value" id="voiceVal">1.0</span>
+            <input type="range" id="voiceVol" min="0" max="1" step="0.1" value="1">
+        </label>
+        
+        <label>
+            Hit Volume: <span class="setting-value" id="hitVal">1.0</span>
+            <input type="range" id="hitVol" min="0" max="1" step="0.1" value="1">
+        </label>
+        
+        <label>
+            Chase Volume: <span class="setting-value" id="chaseVal">1.0</span>
+            <input type="range" id="chaseVol" min="0" max="1" step="0.1" value="1">
+        </label>
+        
+        <label>
+            Vibration (Mobile):
+            <select id="vibrationToggle">
+                <option value="on">Enabled</option>
+                <option value="off">Disabled</option>
+            </select>
+        </label>
+        
+        <label>
+            Theme:
+            <select id="themeSelect">
+                <option value="dark">Dark Horror</option>
+                <option value="light">Light Mode</option>
+            </select>
+        </label>
+    </div>
+</div>
+
+<script>
+/* ==================== AUDIO ==================== */
+const grannyQuotes = [];
+for(let i = 1; i <= 7; i++) {
+    grannyQuotes.push(new Audio(`granny sound ${i}.mp3`));
+}
+const playerHit = new Audio('PlayerGetHit.mp3');
+const gunShoot = new Audio('gunshoot.wav');
+const chaseMusic = new Audio('Chase_Music_(1.8).mp3');
+chaseMusic.loop = true;
+const heart = new Audio('heartbeat_faint.mp3');
+const scare = new Audio('jump_scare.mp3');
+const huntSound = new Audio('Chase_Music_(1.8).mp3');
+huntSound.loop = true;
+
+let voiceV = 1, hitV = 1, chaseV = 1;
+function setVols() {
+    grannyQuotes.forEach(s => s.volume = voiceV);
+    playerHit.volume = hitV;
+    gunShoot.volume = hitV;
+    chaseMusic.volume = chaseV;
+    heart.volume = chaseV * 0.5;
+    scare.volume = voiceV;
+    huntSound.volume = chaseV;
+}
+setVols();
+
+/* Unlock audio */
+let unlocked = false;
+function unlock() {
+    if(unlocked) return;
+    const silent = new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQAABAAgAZwCAAD4AAAD');
+    silent.play().catch(() => {}).then(() => { unlocked = true; });
+}
+document.body.addEventListener('touchstart', unlock, {once: true});
+document.body.addEventListener('click', unlock, {once: true});
+
+/* ==================== CONFIGURABLE VALUES ==================== */
+let stealthDuration = 30;
+let stealthCooldown = 120;
+let stunDuration = 10;
+let floorDuration = 120;
+let floorWarning = 10;
+let randMin = 7, randMax = 10;
+let vibrationEnabled = true;
+
+/* Vibration Helper */
+function vibrate(pattern) {
+    if(vibrationEnabled && 'vibrate' in navigator) {
+        navigator.vibrate(pattern);
+    }
+}
+
+/* Elements */
+const stunEl = document.getElementById('stunTimer');
+const floorEl = document.getElementById('floorTimer');
+const floorAlert = document.getElementById('floorAlert');
+const stealthEndAlert = document.getElementById('stealthEndAlert');
+const stunnedAlert = document.getElementById('stunnedAlert');
+const chaseToggle = document.getElementById('chaseToggle');
+const stealthBtn = document.getElementById('stealthBtn');
+const container = document.querySelector('.container');
+const settings = document.getElementById('settings');
+const settingsBtn = document.getElementById('settingsBtn');
+const closeSettings = document.getElementById('closeSettings');
+const bgTouchArea = document.getElementById('bgTouchArea');
+
+/* Settings Toggle */
+settingsBtn.onclick = () => { 
+    settings.style.display = 'block';
+    vibrate(20);
+};
+
+closeSettings.onclick = () => {
+    settings.style.display = 'none';
+    vibrate(20);
+};
+
+/* Background Hold for Hunt Sound */
+let holdTimeout;
+let isHoldingBg = false;
+
+bgTouchArea.addEventListener('touchstart', (e) => {
+    holdTimeout = setTimeout(() => {
+        isHoldingBg = true;
+        huntSound.play();
+        vibrate([100, 50, 100]);
+    }, 500);
+});
+
+bgTouchArea.addEventListener('touchend', () => {
+    clearTimeout(holdTimeout);
+    if(isHoldingBg) {
+        huntSound.pause();
+        huntSound.currentTime = 0;
+        isHoldingBg = false;
+    }
+});
+
+bgTouchArea.addEventListener('touchmove', () => {
+    clearTimeout(holdTimeout);
+});
+
+/* Mouse events for desktop */
+bgTouchArea.addEventListener('mousedown', () => {
+    holdTimeout = setTimeout(() => {
+        isHoldingBg = true;
+        huntSound.play();
+    }, 500);
+});
+
+bgTouchArea.addEventListener('mouseup', () => {
+    clearTimeout(holdTimeout);
+    if(isHoldingBg) {
+        huntSound.pause();
+        huntSound.currentTime = 0;
+        isHoldingBg = false;
+    }
+});
+
+bgTouchArea.addEventListener('mouseleave', () => {
+    clearTimeout(holdTimeout);
+    if(isHoldingBg) {
+        huntSound.pause();
+        huntSound.currentTime = 0;
+        isHoldingBg = false;
+    }
+});
+
+/* Settings Inputs */
+document.getElementById('randSpeed').oninput = e => {
+    randMin = +e.target.value;
+    randMax = randMin + 3;
+    document.getElementById('randVal').textContent = `${randMin}-${randMax}s`;
+    if(chasing && !stunActive && !stealthActive) startQuotes();
+};
+
+document.getElementById('stealthTime').oninput = e => {
+    stealthDuration = +e.target.value;
+    document.getElementById('stealthTimeVal').textContent = stealthDuration + 's';
+    if(!stealthActive && !stealthCDActive) {
+        stealthBtn.textContent = `Stealth (${stealthDuration}s)`;
+    }
+};
+
+document.getElementById('stealthCD').oninput = e => {
+    stealthCooldown = +e.target.value;
+    document.getElementById('stealthCDVal').textContent = stealthCooldown + 's';
+};
+
+document.getElementById('stunTime').oninput = e => {
+    stunDuration = +e.target.value;
+    document.getElementById('stunTimeVal').textContent = stunDuration + 's';
+};
+
+document.getElementById('floorTime').oninput = e => {
+    floorDuration = +e.target.value;
+    document.getElementById('floorTimeVal').textContent = floorDuration + 's';
+};
+
+document.getElementById('floorWarn').oninput = e => {
+    floorWarning = +e.target.value;
+    document.getElementById('floorWarnVal').textContent = floorWarning + 's';
+};
+
+document.getElementById('voiceVol').oninput = e => {
+    voiceV = +e.target.value;
+    document.getElementById('voiceVal').textContent = voiceV.toFixed(1);
+    setVols();
+};
+
+document.getElementById('hitVol').oninput = e => {
+    hitV = +e.target.value;
+    document.getElementById('hitVal').textContent = hitV.toFixed(1);
+    setVols();
+};
+
+document.getElementById('chaseVol').oninput = e => {
+    chaseV = +e.target.value;
+    document.getElementById('chaseVal').textContent = chaseV.toFixed(1);
+    setVols();
+};
+
+document.getElementById('vibrationToggle').onchange = e => {
+    vibrationEnabled = e.target.value === 'on';
+};
+
+document.getElementById('themeSelect').onchange = e => {
+    document.body.classList.remove('dark-theme', 'light-theme');
+    document.body.classList.add(e.target.value + '-theme');
+    vibrate(20);
+};
+
+/* ==================== STATE ==================== */
+let chasing = false;
+let stunActive = false;
+let stealthActive = false;
+let stealthCDActive = false;
+let quoteInt, floorInt, scareInt, floorAlertTimeout, stealthEndTimeout;
+
+/* ==================== HELPERS ==================== */
+function randDelay(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function showTimer(el, text, blink = false) {
+    el.textContent = text;
+    el.classList.add('active');
+    if(blink) el.classList.add('blink-red');
+    else el.classList.remove('blink-red');
+}
+
+function hideTimer(el) {
+    el.classList.remove('active');
+    el.classList.remove('blink-red');
+    setTimeout(() => el.textContent = '', 300);
+}
+
+function flashRed() {
+    document.body.classList.add('flash-red');
+    setTimeout(() => document.body.classList.remove('flash-red'), 1000);
+}
+
+function flashFloor() {
+    container.classList.add('flash-floor');
+    setTimeout(() => container.classList.remove('flash-floor'), 1200);
+}
+
+function shakeScreen() {
+    container.classList.add('shake');
+    setTimeout(() => container.classList.remove('shake'), 400);
+}
+
+function enterStealth() {
+    document.body.classList.add('stealth-mode');
+    stealthBtn.classList.add('active');
+}
+
+function exitStealth() {
+    document.body.classList.remove('stealth-mode');
+    stealthBtn.classList.remove('active');
+}
+
+/* Random Quotes */
+function startQuotes() {
+    clearInterval(quoteInt);
+    quoteInt = setInterval(() => {
+        if(chasing && !stunActive && !stealthActive) {
+            const i = Math.floor(Math.random() * grannyQuotes.length);
+            grannyQuotes[i].play();
+        }
+    }, randDelay(randMin, randMax) * 1000);
+}
+
+function stopQuotes() {
+    clearInterval(quoteInt);
+}
+
+/* Floor Timer */
+function startFloorTimer() {
+    clearInterval(floorInt);
+    clearTimeout(floorAlertTimeout);
+    let secs = floorDuration;
+    
+    const update = () => {
+        const m = String(Math.floor(secs / 60)).padStart(2, '0');
+        const s = String(secs % 60).padStart(2, '0');
+        const blink = secs <= 5;
+        showTimer(floorEl, `Floor: ${m}:${s}`, blink);
+        secs--;
+        
+        if(secs === floorWarning) {
+            floorAlert.style.display = 'block';
+            flashFloor();
+            vibrate([200, 100, 200]);
+        }
+        
+        if(secs < 0) {
+            clearInterval(floorInt);
+            hideTimer(floorEl);
+            floorAlert.style.display = 'none';
+        }
+    };
+    
+    update();
+    floorInt = setInterval(update, 1000);
+}
+
+function resetFloorTimer() {
+    if(chasing) {
+        floorAlert.style.display = 'none';
+        flashFloor();
+        startFloorTimer();
+        vibrate(50);
+    }
+}
+
+/* Jump Scares */
+function startScares() {
+    clearInterval(scareInt);
+    scareInt = setInterval(() => {
+        if(chasing && !stunActive && !stealthActive && Math.random() < 0.07) {
+            scare.play();
+            vibrate([100, 50, 100, 50, 100]);
+        }
+    }, randDelay(30, 60) * 1000);
+}
+
+/* ==================== CHASE TOGGLE ==================== */
+chaseToggle.onchange = () => {
+    chasing = chaseToggle.checked;
+    vibrate(chasing ? [50, 50, 50] : 30);
+    
+    if(chasing) {
+        chaseMusic.play();
+        startQuotes();
+        startFloorTimer();
+        startScares();
+    } else {
+        chaseMusic.pause();
+        chaseMusic.currentTime = 0;
+        stopQuotes();
+        clearInterval(scareInt);
+        clearInterval(floorInt);
+        clearTimeout(floorAlertTimeout);
+        hideTimer(floorEl);
+        floorAlert.style.display = 'none';
+        stunActive = stealthActive = false;
+        exitStealth();
+        stealthEndAlert.style.display = 'none';
+        stunnedAlert.style.display = 'none';
+        hideTimer(stunEl);
+    }
+};
+
+/* ==================== HIT PLAYER ==================== */
+document.getElementById('hitBtn').onclick = () => {
+    if(!chasing) return;
+    playerHit.play();
+    flashRed();
+    vibrate([100, 50, 100]);
+};
+
+/* ==================== STUN GRANNY ==================== */
+document.getElementById('stunBtn').onclick = () => {
+    if(!chasing || stunActive) return;
+    
+    stunActive = true;
+    stopQuotes();
+    gunShoot.play();
+    playerHit.play();
+    heart.loop = true;
+    heart.play();
+    shakeScreen();
+    vibrate([200, 100, 200, 100, 200]);
+    
+    // Show stunned alert
+    stunnedAlert.style.display = 'block';
+    
+    let t = stunDuration;
+    showTimer(stunEl, `Stun: ${t}s`);
+    
+    const iv = setInterval(() => {
+        t--;
+        const blink = t <= 2;
+        showTimer(stunEl, `Stun: ${t}s`, blink);
+        
+        if(blink) vibrate(50);
+        
+        if(t <= 0 || !chasing) {
+            clearInterval(iv);
+            stunActive = false;
+            heart.pause();
+            heart.currentTime = 0;
+            flashRed();
+            hideTimer(stunEl);
+            stunnedAlert.style.display = 'none';
+            vibrate([100, 50, 100]);
+            if(chasing && !stealthActive) startQuotes();
+        }
+    }, 1000);
+};
+
+/* ==================== STEALTH ==================== */
+document.getElementById('stealthBtn').onclick = () => {
+    if(!chasing || stealthActive || stealthCDActive) return;
+    
+    stealthActive = true;
+    stopQuotes();
+    enterStealth();
+    vibrate([50, 30, 50]);
+    
+    let t = stealthDuration;
+    stealthBtn.textContent = `Stealth: ${t}s`;
+    clearTimeout(stealthEndTimeout);
+    
+    const iv = setInterval(() => {
+        t--;
+        const blink = t <= 5;
+        stealthBtn.textContent = `Stealth: ${t}s`;
+        
+        if(blink) {
+            stealthBtn.classList.add('blink-red');
+            vibrate(30);
+        } else {
+            stealthBtn.classList.remove('blink-red');
+        }
+        
+        if(t === 3) {
+            stealthEndAlert.style.display = 'block';
+            vibrate([100, 50, 100, 50, 100]);
+        }
+        
+        if(t <= 0 || !chasing) {
+            clearInterval(iv);
+            stealthActive = false;
+            exitStealth();
+            stealthEndAlert.style.display = 'none';
+            vibrate([150, 100, 150]);
+            
+            if(chasing && !stunActive) startQuotes();
+            
+            // Cooldown - only blink in last 10 seconds
+            stealthCDActive = true;
+            stealthBtn.disabled = true;
+            let cd = stealthCooldown;
+            
+            const cdIv = setInterval(() => {
+                cd--;
+                const m = String(Math.floor(cd / 60)).padStart(2, '0');
+                const s = String(cd % 60).padStart(2, '0');
+                stealthBtn.textContent = `CD: ${m}:${s}`;
+                
+                // Only blink in last 10 seconds
+                if(cd <= 10) {
+                    stealthBtn.classList.add('blink-red');
+                } else {
+                    stealthBtn.classList.remove('blink-red');
+                }
+                
+                if(cd <= 0 || !chasing) {
+                    clearInterval(cdIv);
+                    stealthCDActive = false;
+                    stealthBtn.disabled = false;
+                    stealthBtn.classList.remove('blink-red');
+                    stealthBtn.textContent = `Stealth (${stealthDuration}s)`;
+                    vibrate(30);
+                }
+            }, 1000);
+        }
+    }, 1000);
+};
+
+/* ==================== CHANGE FLOOR ==================== */
+document.getElementById('floorBtn').onclick = () => {
+    if(chasing) resetFloorTimer();
+};
+
+/* Initialize */
+stealthBtn.textContent = `Stealth (${stealthDuration}s)`;
+</script>
+</body>
+</html>
