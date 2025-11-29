@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Granny Bat Vault</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <link href="https://fonts.googleapis.com/css2?family=Creepster&family=Nosifer&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-red: #ff1111;
+            --dark-bg: rgba(0,0,0,0.92);
+            --container-bg: rgba(0,0,0,0.85);
+            --glow-red: rgba(255,17,17,0.8);
+            --button-bg: linear-gradient(145deg, #a00000, #8b0000);
+            --light-bg: rgba(255,255,255,0.92);
+        }
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(255,0,0,0.1) 0%, transparent 50%),
+                url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="%23ff1111" opacity="0.05"/><circle cx="75" cy="75" r="1" fill="%23ff1111" opacity="0.05"/><circle cx="50" cy="10" r="0.5" fill="%23ff1111" opacity="0.03"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>') center/cover,
+                linear-gradient(135deg, #1a0000 0%, #000 100%);
+            font-family: 'Nosifer', 'Creepster', cursive;
+            color: #fff;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            transition: all 0.5s ease;
+            overflow: hidden;
+            position: relative;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M0 0L100 100M100 0L0 100" stroke="%23ff1111" stroke-width="0.5" opacity="0.1" stroke-dasharray="5,5"/></svg>') repeat;
+            animation: drift 20s linear infinite;
+            z-index: -1;
+        }
+        @keyframes drift {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(-100px, -100px); }
+        }
+        .dark-theme { --dark-bg: rgba(0,0,0,0.92); --container-bg: rgba(0,0,0,0.85); color: #fff; }
+        .light-theme { --dark-bg: rgba(255,255,255,0.92); --container-bg: rgba(255,255,255,0.85); color: #000; text-shadow: 1px 1px 2px rgba(0,0,0,0.2); }
+        .container {
+            max-width: 500px;
+            width: 90%;
+            padding: 40px 20px;
+            background: var(--container-bg);
+            border-radius: 25px;
+            box-shadow: 
+                0 15px 40px rgba(150,0,0,0.6), 
+                0 0 80px var(--glow-red),
+                inset 0 1px 0 rgba(255,255,255,0.1);
+            text-align: center;
+            position: relative;
+            backdrop-filter: blur(15px);
+            z-index: 1;
+            border: 2px solid rgba(255,17,17,0.3);
+            animation: pulse-glow 3s ease-in-out infinite alternate;
+        }
+        @keyframes pulse-glow {
+            0% { box-shadow: 0 15px 40px rgba(150,0,0,0.6), 0 0 80px var(--glow-red); }
+            100% { box-shadow: 0 15px 40px rgba(150,0,0,0.8), 0 0 100px var(--glow-red); }
+        }
+        .light-theme .container {
+            background: var(--light-bg);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3), 0 0 80px rgba(255,17,17,0.3);
+            border-color: rgba(0,0,0,0.1);
+        }
+        h1 {
+            font-size: clamp(28px, 8vw, 40px);
+            margin: 0 0 10px 0;
+            color: var(--primary-red);
+            letter-spacing: 3px;
+            text-shadow: 0 0 30px var(--glow-red);
+            position: relative;
+            animation: flicker 2s infinite alternate;
+        }
+        @keyframes flicker {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.95; text-shadow: 0 0 40px var(--glow-red), 0 0 20px #ff0000; }
+        }
+        .subtitle {
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            opacity: 0.7;
+            margin-bottom: 30px;
+            letter-spacing: 1px;
+            font-weight: 300;
+        }
+        /* Redesigned Menu: Vertical Stack with Hover Float for Uniqueness */
+        .menu-stack {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 40px;
+            margin: 40px 0;
+            perspective: 1000px;
+        }
+        .menu-item {
+            width: 140px;
+            height: 140px;
+            background: var(--button-bg);
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Inter', sans-serif;
+            font-size: 12px;
+            font-weight: 600;
+            color: #fff;
+            text-decoration: none;
+            box-shadow: 
+                0 8px 25px rgba(139,0,0,0.6), 
+                inset 0 2px 0 rgba(255,255,255,0.2),
+                0 0 20px rgba(255,17,17,0.4);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 2px solid var(--primary-red);
+            opacity: 0;
+            transform: translateY(50px) rotateX(90deg);
+            animation: float-in 0.8s ease forwards;
+            pointer-events: auto;
+        }
+        .menu-item:nth-child(1) { animation-delay: 0.1s; }
+        .menu-item:nth-child(2) { animation-delay: 0.3s; }
+        .menu-item:nth-child(3) { animation-delay: 0.5s; }
+        @keyframes float-in {
+            to {
+                opacity: 1;
+                transform: translateY(0) rotateX(0deg);
+            }
+        }
+        .menu-item:hover {
+            transform: translateY(-20px) scale(1.1) rotate(360deg);
+            box-shadow: 0 15px 35px rgba(139,0,0,0.8), 0 0 50px var(--glow-red);
+            color: #fff;
+        }
+        .menu-item i {
+            font-size: 28px;
+            margin-bottom: 8px;
+            display: block;
+            transition: transform 0.3s ease;
+        }
+        .menu-item:hover i {
+            transform: scale(1.2);
+        }
+        .light-theme .menu-item {
+            background: linear-gradient(145deg, #e0e0e0, #d0d0d0);
+            color: #333;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+            border-color: #666;
+        }
+        .menu-item:active {
+            transform: scale(0.95);
+        }
+        .footer {
+            font-family: 'Inter', sans-serif;
+            font-size: 11px;
+            opacity: 0.6;
+            margin-top: 20px;
+            letter-spacing: 0.5px;
+        }
+        /* Theme Toggle */
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.5);
+            border: none;
+            color: #fff;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 50%;
+            transition: all 0.3s;
+        }
+        .theme-toggle:hover { background: var(--primary-red); }
+        /* Mobile Adjustments - Maintain Gap */
+        @media (max-width: 480px) {
+            .container { padding: 30px 15px; width: 95%; max-width: 400px; }
+            .menu-stack { gap: 30px; margin: 30px 0; }
+            .menu-item { width: 120px; height: 120px; font-size: 11px; }
+            .menu-item i { font-size: 24px; }
+        }
+    </style>
+</head>
+<body class="dark-theme">
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Theme">🌙</button>
+    
+    <div class="container">
+        <h1>Granny Bat Vault</h1>
+        <p class="subtitle">Unleash the shadows – choose your curse</p>
+        
+        <div class="menu-stack">
+            <a href="https://github.com/[YOUR_USERNAME]/granny-bat" target="_blank" class="menu-item">
+                <i class="fas fa-vampire"></i>
+                Granny-Bat
+            </a>
+            <a href="https://github.com/[YOUR_USERNAME]/gun" target="_blank" class="menu-item">
+                <i class="fas fa-gun"></i>
+                Gun
+            </a>
+            <a href="https://github.com/[YOUR_USERNAME]/music" target="_blank" class="menu-item">
+                <i class="fas fa-music"></i>
+                Music
+            </a>
+        </div>
+        
+        <p class="footer">Enter at your own risk... <i class="fas fa-bat"></i></p>
+    </div>
+
+    <script>
+        function toggleTheme() {
+            document.body.classList.toggle('dark-theme');
+            document.body.classList.toggle('light-theme');
+        }
+        
+        // Add subtle hover sounds if audio unlocked
+        let unlocked = false;
+        function unlockAudio() {
+            if (unlocked) return;
+            const silent = new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQAABAAgAZwCAAD4AAAD');
+            silent.play().catch(() => {}).then(() => { unlocked = true; });
+        }
+        document.addEventListener('click', unlockAudio, { once: true });
+        document.addEventListener('touchstart', unlockAudio, { once: true });
+        
+        // Hover effects with audio (if unlocked)
+        const items = document.querySelectorAll('.menu-item');
+        items.forEach(item => {
+            item.addEventListener('mouseenter', () => {
+                if (unlocked) {
+                    // Simulate eerie hover sound
+                    const audio = new Audio('data:audio/wav;base64,UklGRnoCAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSxBzvLYiTcIGWi77eedTRAMUKfj8LZvHAc4kdfyxHksBSR3x/DdkE'); // Placeholder silent
+                    audio.volume = 0.1;
+                    audio.play().catch(() => {});
+                }
+            });
+        });
+    </script>
+</body>
+</html>
