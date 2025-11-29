@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Granny Music</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <link href="https://fonts.googleapis.com/css2?family=Creepster&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        * { -webkit-tap-highlight-color: transparent; }
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: url('granny_house_background.jpg') center/cover no-repeat; /* Reuse if available, or fallback to solid */
+            font-family: 'Creepster', cursive;
+            color: #fff;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            transition: background 0.5s ease;
+            overflow-x: hidden;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        body::before { /* Fallback background if image not available */
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #1a0000, #330000);
+            z-index: -2;
+        }
+        .dark-theme { background: rgba(0,0,0,0.92); }
+        .light-theme { background: rgba(255,255,255,0.92); color: #000; text-shadow: 1px 1px 2px rgba(0,0,0,0.2); }
+        .stealth-mode { background: rgba(0,35,0,0.9) !important; }
+       
+        .container {
+            max-width: 420px;
+            width: 100%;
+            padding: 20px 16px;
+            background: rgba(0,0,0,0.85);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(150,0,0,0.6), 0 0 60px rgba(255,0,0,0.3);
+            text-align: center;
+            position: relative;
+            backdrop-filter: blur(10px);
+            z-index: 1;
+        }
+        .light-theme .container {
+            background: rgba(255,255,255,0.85);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+       
+        /* Header with Title & Toggle */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+        h1 {
+            font-size: clamp(24px, 7vw, 32px);
+            margin: 0;
+            color: #ff1111;
+            letter-spacing: 2px;
+            text-shadow: 0 0 20px rgba(255,17,17,0.8);
+        }
+       
+        /* Enhanced Toggle Switch for Play/Pause */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 56px;
+            height: 28px;
+        }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(145deg, #444, #555);
+            transition: 0.3s ease;
+            border-radius: 28px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 3px;
+            bottom: 3px;
+            background: linear-gradient(145deg, #e0e0e0, #fff);
+            transition: 0.3s ease;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        input:checked + .slider {
+            background: linear-gradient(145deg, #a00000, #8b0000);
+            box-shadow: 0 0 15px rgba(255,0,0,0.5), inset 0 2px 4px rgba(0,0,0,0.3);
+        }
+        input:checked + .slider:before {
+            transform: translateX(28px);
+            background: linear-gradient(145deg, #ff3333, #ff6666);
+        }
+       
+        /* Instruction Text */
+        .instruction {
+            font-family: 'Inter', sans-serif;
+            font-size: 12px;
+            opacity: 0.8;
+            margin-bottom: 14px;
+            font-weight: 400;
+        }
+       
+        /* Video Embed */
+        .video-embed {
+            width: 100%;
+            height: 240px;
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            margin-bottom: 16px;
+        }
+        .video-embed iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+       
+        /* Settings Button - Fixed to Screen Corner */
+        #settingsBtn {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            font-size: 28px;
+            background: rgba(0,0,0,0.7);
+            border: 2px solid rgba(255,255,255,0.3);
+            color: #ccc;
+            cursor: pointer;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+            backdrop-filter: blur(10px);
+            z-index: 200;
+        }
+        #settingsBtn:active {
+            transform: rotate(90deg) scale(0.95);
+        }
+       
+        /* Full Screen Settings Overlay */
+        #settings {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.97);
+            z-index: 500;
+            overflow-y: auto;
+            animation: fadeIn 0.3s ease;
+            padding: 80px 20px 40px;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .light-theme #settings {
+            background: rgba(255,255,255,0.97);
+        }
+       
+        #settings .settings-content {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+       
+        #settings h2 {
+            margin: 0 0 30px 0;
+            font-size: 28px;
+            color: #ff4444;
+            text-align: center;
+            font-family: 'Creepster', cursive;
+        }
+       
+        #settings .close-btn {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            font-size: 32px;
+            background: rgba(255,0,0,0.8);
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 16px rgba(255,0,0,0.5);
+            z-index: 501;
+        }
+       
+        #settings label {
+            display: block;
+            margin: 20px 0;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            color: #ddd;
+        }
+        .light-theme #settings label {
+            color: #333;
+        }
+       
+        #settings select {
+            width: 100%;
+            padding: 12px;
+            margin-top: 10px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(0,0,0,0.5);
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .light-theme #settings select {
+            background: rgba(255,255,255,0.9);
+            color: #333;
+            border-color: rgba(0,0,0,0.2);
+        }
+       
+        /* Mobile Optimizations */
+        @media (max-width: 480px) {
+            body {
+                padding: 5px;
+            }
+            .container {
+                padding: 18px 14px;
+            }
+            .video-embed {
+                height: 200px;
+            }
+            #settingsBtn {
+                top: 12px;
+                right: 12px;
+                width: 46px;
+                height: 46px;
+            }
+        }
+    </style>
+</head>
+<body class="dark-theme">
+    <div class="container">
+        <!-- Header with Title & Play Toggle -->
+        <div class="header">
+            <h1>Granny Music</h1>
+            <label class="toggle-switch">
+                <input type="checkbox" id="playToggle">
+                <span class="slider"></span>
+            </label>
+        </div>
+        <p class="instruction">Tap to unlock audio → toggle to play</p>
+       
+        <!-- Video Embed -->
+        <div class="video-embed">
+            <iframe 
+                id="musicPlayer" 
+                src="https://www.youtube.com/embed/0H2sjobAg2Q?autoplay=0&loop=1&playlist=0H2sjobAg2Q&controls=1&modestbranding=1&rel=0" 
+                title="Granny Music" 
+                frameborder="0" 
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                allowfullscreen>
+            </iframe>
+        </div>
+    </div>
+   
+    <!-- Settings Button - Fixed to Screen -->
+    <button id="settingsBtn">⚙️</button>
+    <!-- Full Screen Settings Panel -->
+    <div id="settings">
+        <button class="close-btn" id="closeSettings">✕</button>
+        <div class="settings-content">
+            <h2>⚙️ Settings</h2>
+           
+            <label>
+                Theme:
+                <select id="themeSelect">
+                    <option value="dark">Dark Horror</option>
+                    <option value="light">Light Mode</option>
+                </select>
+            </label>
+        </div>
+    </div>
+   
+    <script>
+        /* Unlock audio on first interaction */
+        let unlocked = false;
+        function unlockAudio() {
+            if (unlocked) return;
+            const silent = new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQAABAAgAZwCAAD4AAAD');
+            silent.play().catch(() => {}).then(() => {
+                unlocked = true;
+                // Optionally trigger autoplay here if toggle is on
+                if (document.getElementById('playToggle').checked) {
+                    playMusic();
+                }
+            });
+        }
+        document.body.addEventListener('touchstart', unlockAudio, { once: true });
+        document.body.addEventListener('click', unlockAudio, { once: true });
+       
+        /* Elements */
+        const playToggle = document.getElementById('playToggle');
+        const musicPlayer = document.getElementById('musicPlayer');
+        const settings = document.getElementById('settings');
+        const settingsBtn = document.getElementById('settingsBtn');
+        const closeSettings = document.getElementById('closeSettings');
+       
+        /* Play/Pause Toggle */
+        playToggle.onchange = () => {
+            if (!unlocked) {
+                unlockAudio();
+                return;
+            }
+            if (playToggle.checked) {
+                playMusic();
+            } else {
+                pauseMusic();
+            }
+        };
+       
+        function playMusic() {
+            musicPlayer.src = musicPlayer.src.replace('autoplay=0', 'autoplay=1');
+            musicPlayer.src += '&mute=0'; // Ensure not muted
+        }
+       
+        function pauseMusic() {
+            musicPlayer.src = musicPlayer.src.replace('autoplay=1', 'autoplay=0');
+        }
+       
+        /* Settings */
+        settingsBtn.onclick = () => {
+            settings.style.display = 'block';
+        };
+        closeSettings.onclick = () => {
+            settings.style.display = 'none';
+        };
+        document.getElementById('themeSelect').onchange = e => {
+            document.body.classList.remove('dark-theme', 'light-theme');
+            document.body.classList.add(e.target.value + '-theme');
+        };
+    </script>
+</body>
+</html>
