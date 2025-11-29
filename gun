@@ -1,0 +1,695 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Timer Alarm Device — Revamped</title>
+<style>
+  :root{
+    --bg:#060607;
+    --panel:#0f1112;
+    --accent:#ffd400;
+    --muted:#444;
+    --btn:#179247;
+    --btn-press:#13783a;
+    --glass: rgba(255,255,255,0.03);
+    --led-off: #202225;
+    --led-border: #3a3a3a;
+  }
+  html,body{height:100%;margin:0;font-family:Inter, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;background:var(--bg);color:#fff}
+  .wrap{
+    min-height:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:28px;
+    box-sizing:border-box;
+  }
+  .device {
+    width:360px;
+    max-width:94vw;
+    background:linear-gradient(180deg,var(--panel), #0b0b0b);
+    border-radius:18px;
+    padding:18px;
+    box-shadow: 0 18px 40px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.02);
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+    align-items:center;
+  }
+  /* Display */
+  .display {
+    width:100%;
+    height:96px;
+    background:linear-gradient(180deg,#0b0b0b,#151617);
+    border-radius:10px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border:1px solid rgba(255,255,255,0.03);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.7), inset 0 -6px 18px rgba(0,0,0,0.6);
+    position:relative;
+    font-family: "Courier New", monospace;
+    letter-spacing:6px;
+    font-weight:700;
+    font-size:44px;
+    color:var(--accent);
+  }
+  .display.small{font-size:36px}
+  .display .sub {
+    position:absolute;
+    right:10px;
+    top:10px;
+    font-size:11px;
+    letter-spacing:0;
+    color:var(--muted);
+    font-weight:600;
+  }
+  /* LED bar */
+  .led-bar {
+    width:100%;
+    display:flex;
+    justify-content:center;
+    gap:8px;
+    padding:6px 2px;
+  }
+  .led {
+    width:22px;
+    height:22px;
+    border-radius:50%;
+    background:var(--led-off);
+    border:1px solid var(--led-border);
+    box-shadow: inset 0 -2px 3px rgba(0,0,0,0.6);
+    transition: background-color 0.12s, box-shadow 0.12s, transform 0.12s;
+  }
+  .led.on{
+    background: var(--accent);
+    box-shadow: 0 0 10px rgba(255,212,0,0.9), inset 0 0 6px rgba(255,255,255,0.06);
+    transform: scale(1.08);
+  }
+  /* Controls */
+  .controls {
+    width:100%;
+    display:flex;
+    gap:10px;
+    align-items:center;
+    justify-content:center;
+  }
+  button#action {
+    flex: 1 1 auto;
+    padding:16px 20px;
+    font-size:16px;
+    border-radius:12px;
+    border: none;
+    background: linear-gradient(180deg,var(--btn), #0fa14a);
+    color: #fff;
+    font-weight:700;
+    cursor:pointer;
+    box-shadow: 0 8px 18px rgba(0,0,0,0.5);
+    touch-action: manipulation;
+    user-select:none;
+  }
+  button#action:active { background: linear-gradient(180deg,var(--btn-press), #0d6b33) }
+  button.settings {
+    padding:16px 20px;
+    font-size:16px;
+    border-radius:12px;
+    border: none;
+    background: linear-gradient(180deg,var(--accent), #e6bf00);
+    color: #000;
+    font-weight:700;
+    cursor:pointer;
+    box-shadow: 0 8px 18px rgba(0,0,0,0.5);
+    touch-action: manipulation;
+    user-select:none;
+    flex: 0 0 auto;
+  }
+  button.settings:active { background: linear-gradient(180deg,#f0d000, #d4a600) }
+  /* small helper text */
+  .help {
+    font-size:12px;
+    color:var(--muted);
+    text-align:center;
+    padding-top:4px;
+  }
+  /* blink helpers (CSS only) */
+  .blink { animation: blink 0.7s steps(1) infinite; }
+  @keyframes blink { 0%,50% { opacity:1 } 51%,100% { opacity:0 } }
+  /* responsive tweaks */
+  @media (max-width:420px){
+    .display { height:84px; font-size:36px }
+    .led { width:18px; height:18px }
+    button#action, button.settings { padding:12px }
+  }
+  /* Settings Overlay */
+  #settings-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.8);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+  #settings-panel {
+    background: linear-gradient(180deg,var(--panel), #0b0b0b);
+    border-radius: 18px;
+    padding: 24px;
+    max-width: 90vw;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 18px 40px rgba(0,0,0,0.8);
+    border: 1px solid rgba(255,255,255,0.05);
+  }
+  .setting-group {
+    margin-bottom: 20px;
+  }
+  .setting-group label {
+    display: block;
+    font-size: 14px;
+    color: var(--accent);
+    margin-bottom: 8px;
+    font-weight: 600;
+  }
+  .setting-group input {
+    width: 100%;
+    padding: 12px;
+    background: var(--glass);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    color: #fff;
+    font-size: 16px;
+    box-sizing: border-box;
+  }
+  .setting-group input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 8px rgba(255,212,0,0.3);
+  }
+  .settings-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 20px;
+  }
+  .settings-buttons button {
+    padding: 12px 20px;
+    border-radius: 8px;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    flex: 1;
+  }
+  .btn-save {
+    background: linear-gradient(180deg,var(--btn), #0fa14a);
+    color: #fff;
+  }
+  .btn-cancel {
+    background: linear-gradient(180deg,var(--muted), #555);
+    color: #fff;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="device" role="application" aria-label="Timer Alarm Device">
+    <div class="display" id="display" aria-live="polite">
+      ----
+      <div class="sub" id="display-sub">IDLE</div>
+    </div>
+    <div class="led-bar" id="led-bar" aria-hidden="true">
+      <div class="led" id="led0"></div>
+      <div class="led" id="led1"></div>
+      <div class="led" id="led2"></div>
+      <div class="led" id="led3"></div>
+      <div class="led" id="led4"></div>
+      <div class="led" id="led5"></div>
+      <div class="led" id="led6"></div>
+    </div>
+    <div class="controls">
+      <button id="action" aria-pressed="false">HOLD TO CHARGE</button>
+      <button id="settings" class="settings" title="Settings">⚙️</button>
+    </div>
+    <div class="help" id="help">Hold the button to start the timer. Release to set the alarm. Long hold &gt;30s → extended alarm.</div>
+  </div>
+</div>
+
+<div id="settings-overlay">
+  <div id="settings-panel">
+    <h2 style="margin-top:0; color:var(--accent); text-align:center;">Settings</h2>
+    <div class="setting-group">
+      <label for="led-interval">LED Interval (seconds per LED):</label>
+      <input type="number" id="led-interval" min="1" max="10" value="5">
+    </div>
+    <div class="setting-group">
+      <label for="extended-threshold">Extended Alarm Threshold (seconds):</label>
+      <input type="number" id="extended-threshold" min="10" max="60" value="30">
+    </div>
+    <div class="setting-group">
+      <label for="beep-times">Beep Times (comma-separated seconds, e.g., 20,25):</label>
+      <input type="text" id="beep-times" value="20,25">
+    </div>
+    <div class="setting-group">
+      <label for="regular-alarm-duration">Regular Alarm Duration (seconds):</label>
+      <input type="number" id="regular-alarm-duration" min="5" max="120" value="30">
+    </div>
+    <div class="setting-group">
+      <label for="extended-alarm-duration">Extended Alarm Duration (seconds):</label>
+      <input type="number" id="extended-alarm-duration" min="5" max="120" value="20">
+    </div>
+    <div class="setting-group">
+      <label for="regular-cooldown">Regular Cooldown (seconds):</label>
+      <input type="number" id="regular-cooldown" min="30" max="300" value="90">
+    </div>
+    <div class="setting-group">
+      <label for="extended-cooldown">Extended Cooldown (seconds):</label>
+      <input type="number" id="extended-cooldown" min="30" max="300" value="150">
+    </div>
+    <div class="setting-group">
+      <label for="vibration-interval">Vibration Interval (seconds):</label>
+      <input type="number" id="vibration-interval" min="5" max="30" value="10">
+    </div>
+    <div class="settings-buttons">
+      <button class="btn-cancel" id="cancel-settings">Cancel</button>
+      <button class="btn-save" id="save-settings">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ========= Improved JS for reliability, single-file =========
+   Key changes:
+   - central timer/timeout registry to avoid leaks
+   - AudioContext resume on first user gesture
+   - consistent mm:ss display formatting and countdown
+   - safe clearing of all intervals/timeouts on state transitions
+   - corrected runner LED boundary behavior
+   - more descriptive display subtitles
+   - Added settings menu with localStorage persistence
+*/
+/* ---------- Configurable Settings ---------- */
+let config = {
+  ledInterval: 5, // seconds per LED
+  extendedThreshold: 30, // seconds
+  beepTimes: [20, 25], // array of seconds
+  regularAlarmDuration: 30, // seconds
+  extendedAlarmDuration: 20, // seconds
+  regularCooldown: 90, // seconds
+  extendedCooldown: 150, // seconds
+  vibrationInterval: 10 // seconds
+};
+
+function loadConfig() {
+  const saved = localStorage.getItem('timerAlarmConfig');
+  if (saved) {
+    const parsed = JSON.parse(saved);
+    Object.assign(config, parsed);
+  }
+  // Update UI inputs
+  document.getElementById('led-interval').value = config.ledInterval;
+  document.getElementById('extended-threshold').value = config.extendedThreshold;
+  document.getElementById('beep-times').value = config.beepTimes.join(',');
+  document.getElementById('regular-alarm-duration').value = config.regularAlarmDuration;
+  document.getElementById('extended-alarm-duration').value = config.extendedAlarmDuration;
+  document.getElementById('regular-cooldown').value = config.regularCooldown;
+  document.getElementById('extended-cooldown').value = config.extendedCooldown;
+  document.getElementById('vibration-interval').value = config.vibrationInterval;
+}
+
+function saveConfig() {
+  localStorage.setItem('timerAlarmConfig', JSON.stringify(config));
+}
+
+/* ---------- Settings UI ---------- */
+const settingsBtn = document.getElementById('settings');
+const overlay = document.getElementById('settings-overlay');
+const saveBtn = document.getElementById('save-settings');
+const cancelBtn = document.getElementById('cancel-settings');
+
+settingsBtn.addEventListener('click', () => {
+  overlay.style.display = 'flex';
+});
+
+function closeSettings() {
+  overlay.style.display = 'none';
+}
+
+cancelBtn.addEventListener('click', closeSettings);
+
+saveBtn.addEventListener('click', () => {
+  // Parse and validate inputs
+  config.ledInterval = parseInt(document.getElementById('led-interval').value) || 5;
+  config.extendedThreshold = parseInt(document.getElementById('extended-threshold').value) || 30;
+  try {
+    config.beepTimes = document.getElementById('beep-times').value.split(',').map(s => parseInt(s.trim())).filter(n => n > 0);
+  } catch (e) {
+    config.beepTimes = [20, 25];
+  }
+  config.regularAlarmDuration = parseInt(document.getElementById('regular-alarm-duration').value) || 30;
+  config.extendedAlarmDuration = parseInt(document.getElementById('extended-alarm-duration').value) || 20;
+  config.regularCooldown = parseInt(document.getElementById('regular-cooldown').value) || 90;
+  config.extendedCooldown = parseInt(document.getElementById('extended-cooldown').value) || 150;
+  config.vibrationInterval = parseInt(document.getElementById('vibration-interval').value) || 10;
+
+  saveConfig();
+  closeSettings();
+  // Optional: Show confirmation on display briefly
+  showText('SAVED', 'CONFIG');
+  setTimeout(() => startIdle(), 1000);
+});
+
+overlay.addEventListener('click', (e) => {
+  if (e.target === overlay) closeSettings();
+});
+
+/* ---------- State & timing ---------- */
+const STATES = {
+  IDLE: 'idle',
+  TIMER: 'timer',
+  REGULAR_ALARM: 'regularAlarm',
+  EXTENDED_ALARM: 'extendedAlarm',
+  REGULAR_COOLDOWN: 'regularCooldown',
+  EXTENDED_COOLDOWN: 'extendedCooldown'
+};
+let state = STATES.IDLE;
+let startTime = 0;
+let elapsed = 0;
+let alarmCycleStart = 0;
+let cooldownLeft = 0;
+let ledRunnerPos = 0;
+let ledRunnerDir = 1;
+/* Registry for intervals/timeouts to clear reliably */
+const timers = new Set();
+function setRegInterval(fn, ms){
+  const id = setInterval(fn, ms); timers.add(id); return id;
+}
+function setRegTimeout(fn, ms){
+  const id = setTimeout(() => { timers.delete(id); fn(); }, ms); timers.add(id); return id;
+}
+function clearAllTimers(){
+  for(const id of Array.from(timers)){ clearInterval(id); clearTimeout(id); timers.delete(id); }
+}
+/* --------- DOM refs --------- */
+const display = document.getElementById('display');
+const displaySub = document.getElementById('display-sub');
+const leds = Array.from({length:7}, (_,i) => document.getElementById('led'+i));
+const button = document.getElementById('action');
+const help = document.getElementById('help');
+/* ---------- Audio ---------- */
+let audioCtx = null;
+let osc = null;
+function initAudio(){
+  if(!audioCtx){
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+}
+function resumeAudioIfNeeded(){
+  if(audioCtx && audioCtx.state === 'suspended') return audioCtx.resume();
+}
+function playBeep(ms=400, freq=2200){
+  initAudio();
+  resumeAudioIfNeeded();
+  if(osc){ try{ osc.stop(); }catch(e){} osc = null; }
+  osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.frequency.value = freq;
+  gain.gain.value = 0.08;
+  osc.start();
+  setRegTimeout(()=>{ try{ osc.stop(); }catch(e){} osc=null; }, ms);
+}
+function stopBeep(){
+  if(osc){ try{ osc.stop(); }catch(e){} osc = null; }
+}
+/* ---------- Vibration helper ---------- */
+function vibrate(ms=300){
+  if(navigator.vibrate) navigator.vibrate(ms);
+}
+/* ---------- Display helpers ---------- */
+function fmtMMSS(totalMs){
+  const s = Math.max(0, Math.floor(totalMs/1000));
+  const mm = Math.floor(s/60);
+  const ss = s % 60;
+  return String(mm).padStart(2,'0') + ':' + String(ss).padStart(2,'0');
+}
+function showText(text, subtitle=''){
+  display.textContent = text;
+  displaySub.textContent = subtitle;
+}
+function showBlinking(text, subtitle=''){
+  display.classList.add('blink');
+  showText(text, subtitle);
+}
+function clearBlink(){
+  display.classList.remove('blink');
+}
+/* ---------- LED helpers ---------- */
+function setLedsFill(count){
+  leds.forEach((el,i)=> el.classList.toggle('on', i < count));
+}
+function setLedsAll(on){
+  leds.forEach(el => el.classList.toggle('on', !!on));
+}
+function setLedRunner(pos){
+  leds.forEach((el,i) => el.classList.toggle('on', i === pos));
+}
+/* ---------- Idle animation ---------- */
+const idleText = 'HI  '; // will scroll across 4-char display
+let idleFrameIdx = 0;
+function scrollIdle(){
+  const width = 4;
+  const full = idleText + ' '.repeat(width);
+  const start = idleFrameIdx % full.length;
+  const visible = (full + full).substr(start, width);
+  showText(visible, 'IDLE');
+  idleFrameIdx++;
+}
+/* ---------- Timer logic ---------- */
+function startIdle(){
+  clearAllTimers();
+  state = STATES.IDLE;
+  idleFrameIdx = 0;
+  scrollIdle();
+  setRegInterval(scrollIdle, 300);
+  setLedsFill(0);
+  display.classList.remove('small');
+  displaySub.textContent = 'IDLE';
+}
+/* Called when user presses button to begin charging timer */
+function startCharging(){
+  if(state !== STATES.IDLE) return;
+  initAudio(); // create audio context (user gesture)
+  state = STATES.TIMER;
+  startTime = Date.now();
+  elapsed = 0;
+  clearAllTimers();
+  setLedsFill(0);
+  showText('00:00','CHARGING');
+  // main update loop: 100ms tick
+  setRegInterval(updateWhileCharging, 100);
+}
+/* Update while button is held */
+function updateWhileCharging(){
+  elapsed = Date.now() - startTime;
+  // display mm:ss elapsed
+  showText(fmtMMSS(elapsed),'CHARGING');
+  // LED fill: every config.ledInterval s lights one more (7 leds)
+  const secs = Math.floor(elapsed/1000);
+  const ledFill = Math.min(7, Math.floor(secs/config.ledInterval)+1);
+  setLedsFill(ledFill);
+  // haptic at every config.vibrationInterval s boundary (best effort)
+  if(secs > 0 && secs % config.vibrationInterval === 0 && (elapsed % 1000) < 150) vibrate(60);
+  // beeps at configured times
+  config.beepTimes.forEach(beepSec => {
+    if(secs === beepSec && (elapsed % 1000) < 150){
+      playBeep(280);
+    }
+  });
+  // If user keeps holding beyond config.extendedThreshold s we auto-transition to extended alarm
+  if(elapsed >= config.extendedThreshold * 1000){
+    // to match original, trigger extended alarm immediately
+    stopChargingAndTrigger(true);
+  }
+}
+/* Called on button release */
+function releaseCharging(){
+  if(state !== STATES.TIMER) return;
+  const total = Date.now() - startTime;
+  stopChargingAndTrigger(total >= config.extendedThreshold * 1000);
+}
+/* Safe transition helper */
+function stopChargingAndTrigger(isExtended){
+  clearAllTimers();
+  stopBeep();
+  setLedsFill(0);
+  if(isExtended){
+    startExtendedAlarm();
+  } else {
+    startRegularAlarm();
+  }
+}
+/* ---------- Alarms ---------- */
+function startRegularAlarm(){
+  clearAllTimers();
+  state = STATES.REGULAR_ALARM;
+  alarmCycleStart = Date.now();
+  displaySub.textContent = 'ALARM';
+  // blink LEDs and beep every 500ms for config duration
+  const DURATION = config.regularAlarmDuration * 1000;
+  setLedsAll(true);
+  playBeep(250);
+  setRegInterval(()=>{
+    const cycle = Date.now() - alarmCycleStart;
+    if(cycle >= DURATION){
+      clearAllTimers();
+      setLedsFill(0);
+      startRegularCooldown();
+      return;
+    }
+    const half = Math.floor(cycle/500) % 2 === 0;
+    setLedsAll(half);
+    if(half) playBeep(160);
+  }, 150);
+  setRegInterval(()=> showBlinking('GO','ALARM'), 250); // display GO toggled through setBlink
+}
+function startExtendedAlarm(){
+  clearAllTimers();
+  state = STATES.EXTENDED_ALARM;
+  alarmCycleStart = Date.now();
+  displaySub.textContent = 'EXT ALARM';
+  const DURATION = config.extendedAlarmDuration * 1000;
+  setLedsAll(true);
+  playBeep(240);
+  setRegInterval(()=>{
+    const cycle = Date.now() - alarmCycleStart;
+    if(cycle >= DURATION){
+      clearAllTimers();
+      setLedsFill(0);
+      startExtendedCooldown();
+      return;
+    }
+    const half = Math.floor(cycle/500) % 2 === 0;
+    setLedsAll(half);
+    if(half) playBeep(130);
+  }, 150);
+  setRegInterval(()=> showBlinking('GO','EXT ALARM'), 250);
+}
+/* ---------- Cooldowns (with runner LEDs + countdown) ---------- */
+function startRegularCooldown(){
+  clearAllTimers();
+  state = STATES.REGULAR_COOLDOWN;
+  cooldownLeft = config.regularCooldown * 1000;
+  displaySub.textContent = 'COOLDOWN';
+  ledRunnerPos = 0; ledRunnerDir = 1;
+  // runner every 150ms
+  setRegInterval(()=>{
+    setLedRunner(ledRunnerPos);
+    ledRunnerPos += ledRunnerDir;
+    if(ledRunnerPos >= 6) { ledRunnerDir = -1; ledRunnerPos = 6; }
+    if(ledRunnerPos <= 0) { ledRunnerDir = 1; ledRunnerPos = 0; }
+  }, 150);
+  // countdown tick every 1s
+  setRegInterval(()=>{
+    cooldownLeft -= 1000;
+    showText(fmtMMSS(cooldownLeft), 'COOLDOWN');
+    if(cooldownLeft <= 10000){
+      // last 10s blink
+      display.classList.add('blink');
+    } else clearBlink();
+    if(cooldownLeft <= 0){
+      clearAllTimers();
+      setLedsFill(0);
+      showText('00:00','READY');
+      finalLedBlinkSequence(() => {
+        vibrate(350);
+        playBeep(300);
+        setRegTimeout(()=> startIdle(), 500);
+      });
+    }
+  }, 1000);
+  // initial update
+  showText(fmtMMSS(cooldownLeft),'COOLDOWN');
+}
+function startExtendedCooldown(){
+  clearAllTimers();
+  state = STATES.EXTENDED_COOLDOWN;
+  cooldownLeft = config.extendedCooldown * 1000;
+  displaySub.textContent = 'EXT COOLDOWN';
+  ledRunnerPos = 0; ledRunnerDir = 1;
+  setRegInterval(()=>{
+    setLedRunner(ledRunnerPos);
+    ledRunnerPos += ledRunnerDir;
+    if(ledRunnerPos >= 6) { ledRunnerDir = -1; ledRunnerPos = 6; }
+    if(ledRunnerPos <= 0) { ledRunnerDir = 1; ledRunnerPos = 0; }
+  }, 150);
+  setRegInterval(()=>{
+    cooldownLeft -= 1000;
+    showText(fmtMMSS(cooldownLeft),'EXT COOLDOWN');
+    if(cooldownLeft <= 10000) display.classList.add('blink'); else clearBlink();
+    if(cooldownLeft <= 0){
+      clearAllTimers();
+      setLedsFill(0);
+      showText('00:00','READY');
+      finalLedBlinkSequence(() => {
+        vibrate(350);
+        playBeep(300);
+        setRegTimeout(()=> playBeep(300), 250);
+        setRegTimeout(()=> startIdle(), 900);
+      });
+    }
+  }, 1000);
+  showText(fmtMMSS(cooldownLeft),'EXT COOLDOWN');
+}
+/* final LED blink "celebration" */
+function finalLedBlinkSequence(callback){
+  let step = 0;
+  const totalSteps = 6;
+  const id = setInterval(()=>{
+    const on = step % 2 === 0;
+    setLedsAll(on);
+    step++;
+    if(step > totalSteps){
+      clearInterval(id);
+      setLedsFill(0);
+      if(typeof callback === 'function') callback();
+    }
+  }, 160);
+  timers.add(id);
+}
+/* ---------- Event wiring (pointer + touch friendly) ---------- */
+let pointerDown = false;
+let holdStartTime = 0;
+function pointerStart(e){
+  e.preventDefault();
+  // resume audio on user gesture (browsers require it)
+  initAudio(); if(audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+  if(pointerDown) return;
+  pointerDown = true;
+  holdStartTime = Date.now();
+  button.setAttribute('aria-pressed','true');
+  button.textContent = 'RELEASING WILL SET';
+  startCharging();
+}
+function pointerEnd(e){
+  e && e.preventDefault();
+  if(!pointerDown) return;
+  pointerDown = false;
+  button.setAttribute('aria-pressed','false');
+  button.textContent = 'HOLD TO CHARGE';
+  releaseCharging();
+}
+button.addEventListener('pointerdown', pointerStart);
+window.addEventListener('pointerup', pointerEnd);
+button.addEventListener('touchstart', e => { e.preventDefault(); pointerStart(e); }, {passive:false});
+window.addEventListener('touchend', e => { e.preventDefault(); pointerEnd(e); }, {passive:false});
+// Prevent context menu on long-press (mobile)
+button.addEventListener('contextmenu', e => e.preventDefault());
+/* ---------- Init ---------- */
+loadConfig();
+startIdle();
+</script>
+</body>
+</html>
